@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<!-- 文書全体の言語を日本語に指定 -->
+<html lang="ja">
+<head>
+  <!-- 文字コードをUTF-8に指定(日本語が正しく表示されるようにするため必須) -->
+  <meta charset="UTF-8" />
+  <!-- スマホなどでも正しい大きさで表示されるようにする設定(レスポンシブ対応の基本) -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>深海ことづて局 | 公式サイト</title>
+  <meta name="description" content="海の底で郵便を届ける、深海郵便配達ゲーム「深海ことづて局」公式サイト。あなたも深海の郵便配達人になって、迷子の手紙を届けよう。" />
+
+  <!-- Googleフォント「DotGothic16」を読み込む(レトロなドット文字のフォント) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet" />
+
+  <!-- このサイト専用のスタイルシートを読み込む -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ============================================================
+       ローディング画面
+       ページが読み込まれている間、海に潜る前の演出として表示する。
+       JavaScript側で読み込み完了後にこの要素へ「非表示」のクラスを付ける。
+  ============================================================ -->
+  <div id="loading-screen">
+    <!-- 上へ流れていく泡を入れるための空の入れ物。中身はJSで自動生成する -->
+    <div class="loading-bubbles" id="loading-bubbles"></div>
+
+    <!-- 波の揺らぎを表現するSVG(下部に配置し、CSSでゆらゆら動かす) -->
+    <svg class="loading-wave" viewBox="0 0 1440 200" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0,100 C240,150 480,50 720,100 C960,150 1200,50 1440,100 L1440,200 L0,200 Z" fill="#154f8a"></path>
+    </svg>
+
+    <div class="loading-content">
+      <!-- ロゴ文字。CSSで上下にふわふわ浮遊させる -->
+      <p class="loading-logo">深海ことづて局</p>
+      <!-- 「深海へ潜航中...」など複数のテキストをJSで数秒おきに切り替える対象 -->
+      <p class="loading-text" id="loading-text">loading...</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       全体の背景を演出するレイヤー(固定表示・最背面)
+       スクロール量に応じてJSがCSS変数を書き換え、色を
+       「浅い海 → 中層 → 深海」へ連続的に変化させる。
+  ============================================================ -->
+  <div id="ocean-background" aria-hidden="true">
+    <!-- マリンスノー(海雪)と光の粒はCanvasで軽量に描画する -->
+    <canvas id="particle-canvas"></canvas>
+    <!-- 泡・クラゲ・小さな魚はCSSアニメーションで漂わせるためのレイヤー -->
+    <div class="drifters" id="drifters"></div>
+  </div>
+
+  <!-- ============================================================
+       メインコンテンツ
+  ============================================================ -->
+  <main>
+
+    <!-- ---------- 1. ヒーローセクション ---------- -->
+    <section id="hero" class="section hero">
+      <!-- メインビジュアルを背景として表示 -->
+      <div class="hero-art" aria-hidden="true">
+        <img class="hero-image" src="images/shinkai1.png" alt="" />
+      </div>
+
+      <div class="hero-inner">
+        <!-- タイトルロゴは左上に表示 -->
+        <h1 class="hero-logo" id="hero-logo">
+          <img class="hero-logo-image" src="images/title-logo.png" alt="深海ことづて局" />
+        </h1>
+        <p class="hero-copy" id="hero-copy">深海の郵便局で、他者とのつながりを再発見する、パズルＡＤＶゲーム</p>
+      </div>
+
+      <!-- 下部の「Scroll」表示。マウスアイコン風のパーツを添える -->
+      <div class="scroll-cue" aria-hidden="true">
+        <span class="scroll-mouse"><span class="scroll-dot"></span></span>
+        <span class="scroll-word">Scroll</span>
+      </div>
+    </section>
+
+    <!-- ---------- 2. あらすじ ---------- -->
+    <section id="story" class="section story">
+      <div class="section-inner">
+        <p class="eyebrow reveal">Prologue</p>
+        <h2 class="section-title reveal">海の底には、<br>ときどき変わったことを思いつく者がいる。</h2>
+        <p class="body-text reveal">
+          海の外の世界には、「ポスト」という箱があるらしい。<br>
+          そこに何かを入れると、遠くの誰かのところへ届くんだとか。<br>
+          とある変わり者が、海にも似た仕組みを作ったようだ。<br>
+          そうして作られたのが――「ことづて局」と呼ばれる場所である。
+        </p>
+        <p class="body-text reveal">
+          ここは深海のとある場所に作られた「ことづて局」。<br>
+          そして、あなたは今日からここで働く新入りだ。<br>
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- 3. ゲーム概要 ---------- -->
+    <section id="overview" class="section overview">
+      <div class="section-inner">
+        <p class="eyebrow reveal">About the Game</p>
+        <h2 class="section-title reveal">ゲーム概要</h2>
+
+        <!-- カードUIで概要情報を並べる。半透明のガラス風カード -->
+        <div class="card-grid reveal">
+          <div class="glass-card">
+            <p class="card-label">ジャンル</p>
+            <p class="card-value">仕分け×アドベンチャー</p>
+          </div>
+          <div class="glass-card">
+            <p class="card-label">プレイ人数</p>
+            <p class="card-value">1人</p>
+          </div>
+          <div class="glass-card">
+            <p class="card-label">プレイ時間</p>
+            <p class="card-value">3時間程度</p>
+          </div>
+          <div class="glass-card">
+            <p class="card-label">対応機種</p>
+            <p class="card-value">PC・スマートフォン<br>(どちらもブラウザ版)</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 4. 導線カード(キャラクター/システム/ギャラリー/ダウンロード) ---------- -->
+    <section id="navigate" class="section navigate">
+      <div class="section-inner">
+
+        <div class="nav-card-grid reveal">
+          <!-- href="#characters" のようにページ内リンクで各セクションへ移動する -->
+          <a href="#characters" class="nav-card">
+            <span class="nav-card-icon" aria-hidden="true">🐚</span>
+            <span class="nav-card-title">キャラクター</span>
+            <span class="nav-card-desc">個性豊かな海中生物たち</span>
+          </a>
+          <a href="#system" class="nav-card">
+            <span class="nav-card-icon" aria-hidden="true">✉️</span>
+            <span class="nav-card-title">システム</span>
+            <span class="nav-card-desc">配達のしくみ</span>
+          </a>
+          <a href="#gallery" class="nav-card">
+            <span class="nav-card-icon" aria-hidden="true">🫧</span>
+            <span class="nav-card-title">ギャラリー</span>
+            <span class="nav-card-desc">海中の風景</span>
+          </a>
+          <a href="#download" class="nav-card">
+            <span class="nav-card-icon" aria-hidden="true">⚓</span>
+            <span class="nav-card-title">ダウンロード</span>
+            <span class="nav-card-desc">局員登録はこちら</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 5. キャラクター(カルーセル) ---------- -->
+    <section id="characters" class="section characters">
+      <div class="section-inner">
+        <p class="eyebrow reveal">Characters</p>
+        <h2 class="section-title reveal">ことづて局を訪れるキャラクターたち</h2>
+
+        <div class="carousel" id="carousel">
+          <button class="carousel-arrow carousel-arrow--prev" id="prev-btn" aria-label="前のキャラクター">‹</button>
+
+          <!-- 立ち絵を追加するときは、各画像の src を実際の画像パスに書き換えてください。例: images/主人公.png -->
+          <div class="carousel-stage">
+            <article class="carousel-slide is-active" data-color="#33aacb">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/syuzinko9.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">主人公<span class="slide-name-sub">ことづて局の新人</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>メンダコ</dd></div>
+                  <div><dt>役職</dt><dd>深海ことづて局 局員</dd></div>
+                  <div><dt>趣味</dt><dd>睡眠</dd></div>
+                </dl>
+                <p class="slide-text">
+                  自堕落でめんどうくさがり、無気力で内向的。<br>
+                  家賃滞納をきっかけに「ことづて局」を紹介され、働くことになる。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#154f8a">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/senpai.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">センパイ<span class="slide-name-sub">主人公の教育係</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>ハダカイワシ</dd></div>
+                  <div><dt>役職</dt><dd>深海ことづて局 局員</dd></div>
+                  <div><dt>好物</dt><dd>噛み応えのあるもの</dd></div>
+                </dl>
+                <p class="slide-text">
+                  底抜けに明るく、社交的でおしゃべり。嫌なくらいに明け透け。<br>
+                  主人公の教育係で、配達の手順やマニュアルの使い方を教えてくれる。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/ooya_通常.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">オオヤ<span class="slide-name-sub">主人公宅の大家さん</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>ダイオウグソクムシ</dd></div>
+                  <div><dt>役職</dt><dd>アパート経営者</dd></div>
+                  <div><dt>日課</dt><dd>防犯パトロール</dd></div>
+                </dl>
+                <p class="slide-text">
+                  堅物で気難しいが、優しく面倒見のいい性格。主人公に「ことづて局」を紹介した。<br>
+                  ことづて局の局長とは古くからの付き合いらしい。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/kyokutyo.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">キョクチョウ</p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>？？？</dd></div>
+                  <div><dt>役職</dt><dd>ことづて局 局長</dd></div>
+                  <div><dt>趣味</dt><dd>？？？</dd></div>
+                </dl>
+                <p class="slide-text">
+                  ことづて局の創設者で、局長。<br>
+                  体が大きくことづて局には入れないようで、人間の残した「デンワ」を使い、<br>
+                  ここではないどこかから指示をくれる。
+
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/wakame_2.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">ワカメ<span class="slide-name-sub">お客さん</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>？？？</dd></div>
+                  <div><dt>役職</dt><dd>お客さん</dd></div>
+                  <div><dt>好物</dt><dd>？？？</dd></div>
+                </dl>
+                <p class="slide-text">
+                  ことづて局に突然やってきた、海藻まみれの不思議なお客さん。<br>
+                  無口で、おどおどしている。気弱な子のようだ。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/loveka.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">カグラ<span class="slide-name-sub">要更生対象</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>ラブカ</dd></div>
+                  <div><dt>役職</dt><dd>ーーー</dd></div>
+                  <div><dt>好物</dt><dd>肉</dd></div>
+                </dl>
+                <p class="slide-text">
+                  スラム街を縄張りにしていた凶暴な不良。暴れん坊で食いしん坊。<br>
+                  自警団に捕獲され、更生を目的にことづて局へ送られてきた。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/deme.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">バレル<span class="slide-name-sub">治安維持に努める自警団</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>デメニギス</dd></div>
+                  <div><dt>役職</dt><dd>プロの踊り子</dd></div>
+                  <div><dt>趣味</dt><dd></dd></div>
+                </dl>
+                <p class="slide-text">
+                  治安維持に努める自警団。<br>
+                  真面目で落ち着きのある性格だが、冗談も言うし結構柔軟で強かな性格。
+
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/piumu.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">ピウム<span class="slide-name-sub">職業体験に来たお嬢様</span></p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>センジュナマコ</dd></div>
+                  <div><dt>役職</dt><dd>財閥のお嬢様</dd></div>
+                  <div><dt>趣味</dt><dd></dd></div>
+                </dl>
+                <p class="slide-text">
+                  ジュウモンジ財閥の箱入りお嬢様。世間知らずでパワフル。<br>
+                  人付き合いを学ぶために、職業体験としてことづて局にやってきた。
+                </p>
+              </div>
+            </article>
+
+            <article class="carousel-slide" data-color="#21fdfd">
+              <div class="slide-portrait" aria-hidden="true">
+                <img class="slide-portrait-image" src="images/senju.png" alt="" />
+              </div>
+              <div class="slide-profile">
+                <p class="slide-name">センジュ</p>
+                <dl class="slide-meta">
+                  <div><dt>種族</dt><dd>センジュナマコ</dd></div>
+                  <div><dt>役職</dt><dd>プロの踊り子</dd></div>
+                  <div><dt>趣味</dt><dd></dd></div>
+                </dl>
+                <p class="slide-text">
+                  ファンレターをきっかけに、郵便という文化に興味を持ったらしい。<br>
+                  飄々としていて掴みどころのない性格。踊り子としての活動の合間に、ことづて局を訪れる。
+                </p>
+              </div>
+            </article>
+          </div>
+
+          <button class="carousel-arrow carousel-arrow--next" id="next-btn" aria-label="次のキャラクター">›</button>
+          <div class="carousel-dots" id="carousel-dots"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 6. ゲームシステム ---------- -->
+    <section id="system" class="section system">
+      <div class="section-inner">
+        <p class="eyebrow reveal">Game System</p>
+        <h2 class="section-title reveal">配達のしくみ</h2>
+
+        <p class="body-text reveal">
+          海中の郵便文化は始まったばかり。<br>
+          宛名が消えていたり、昔の地名で書かれていたり、海流で荷物が壊れてしまったり……<br>
+          深海では様々な郵便トラブルが起こります。
+        </p>
+<br>
+
+        <p class="body-text reveal system-purpose">
+          プレイヤーの目的は、郵便物の届け先を推理して正しく配達すること。
+        </p>
+<br>
+
+        <!-- スクリーンショットを追加するときは、各 img の src を画像パスに書き換えてください -->
+        <div class="step-grid reveal">
+          <div class="step-card">
+            <div class="step-shot">
+              <img src="images/sc1.png" alt="" />
+            </div>
+            <p class="step-num">01</p>
+            <p class="step-title">郵便物を確認</p>
+            <p class="step-desc">届いた荷物の見た目、特徴などをじっくり観察する。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-shot">
+              <img src="images/sc2.png" alt="" />
+            </div>
+            <p class="step-num">02</p>
+            <p class="step-title">マニュアルを見る</p>
+            <p class="step-desc">局に保管されている資料で、地名や施設の情報を調べる。</p>
+          </div>
+          <div class="step-card">
+            <div class="step-shot">
+              <img src="images/sc3.png" alt="" />
+            </div>
+            <p class="step-num">03</p>
+            <p class="step-title">届け先を推理</p>
+            <p class="step-desc">集めた手がかりから、正しい届け先を考える。</p>
+          </div>
+        </div>
+
+        <!-- 推理のコツを短い文章で紹介 -->
+        <h3 class="section-subtitle reveal">推理のヒント</h3>
+        <p class="body-text reveal system-purpose">
+          荷物の特徴や内容、地名、名産、文化……<br>
+          センパイや他のキャラクターと会話しながら情報を集め、整理するのがコツです。
+        </p>
+      </div>
+    </section>
+
+    <!-- ---------- 7. ギャラリー ---------- -->
+    <section id="gallery" class="section gallery">
+      <div class="section-inner">
+        <p class="eyebrow reveal">Gallery</p>
+        <h2 class="section-title reveal">海中の風景</h2>
+
+        <div class="gallery-viewer reveal" id="gallery-viewer" aria-label="海中の風景ギャラリー">
+          <figure class="gallery-feature">
+            <img class="gallery-feature-image" id="gallery-feature-image" src="images/shinkai1_5.png" alt="ことづて局" />
+            <button class="gallery-arrow gallery-arrow--prev" id="gallery-prev" type="button" aria-label="前の画像">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m15 18-6-6 6-6" /></svg>
+            </button>
+            <button class="gallery-arrow gallery-arrow--next" id="gallery-next" type="button" aria-label="次の画像">
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="m9 18 6-6-6-6" /></svg>
+            </button>
+            <figcaption class="gallery-feature-caption" id="gallery-feature-caption" aria-live="polite">ことづて局</figcaption>
+          </figure>
+
+          <!-- サムネイルの画像パスは各 img の src を書き換えてください -->
+          <div class="gallery-thumbnails" id="gallery-thumbnails">
+            <button class="gallery-thumb is-active" type="button" data-caption="ことづて局" aria-label="ことづて局を表示" aria-pressed="true">
+              <img src="images/shinkai1_5.png" alt="" />
+              <span>ことづて局</span>
+            </button>
+            <button class="gallery-thumb" type="button" data-caption="光の差し込む浅瀬" aria-label="光の差し込む浅瀬を表示" aria-pressed="false">
+              <img src="images/sea.png" alt="" />
+              <span>光の差し込む浅瀬</span>
+            </button>
+            <button class="gallery-thumb" type="button" data-caption="主人公の家の付近" aria-label="主人公の家の付近を表示" aria-pressed="false">
+              <img src="images/roomsoto.png" alt="" />
+              <span>主人公の家の付近</span>
+            </button>
+            <button class="gallery-thumb" type="button" data-caption="ことづて局の内部" aria-label="ことづて局の内部を表示" aria-pressed="false">
+              <img src="images/kyokunai.png" alt="" />
+              <span>ことづて局の内部</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- 8. ダウンロード ---------- -->
+    <section id="download" class="section download">
+      <div class="section-inner">
+        <p class="eyebrow reveal">Join the Bureau</p>
+        <h2 class="section-title reveal">局員登録</h2>
+        <p class="body-text reveal">
+          ことづて局は、ヒトデ不足で大忙し！
+          いつでも新しい局員を待っています。<br>
+        </p>
+
+        <div class="download-buttons reveal">
+          <a href="#" class="download-btn">PC(ブラウザ)版</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ---------- フッター ---------- -->
+    <footer class="footer">
+      <p class="footer-logo">深海ことづて局</p>
+      <p class="footer-copy">&copy; 2026 Shinkai Kotozute Kyoku Project</p>
+    </footer>
+
+  </main>
+
+  <!-- このサイト専用のJavaScriptを読み込む。bodyの最後に置くことでHTML読み込み後に実行される -->
+  <script src="script.js"></script>
+</body>
+</html>
